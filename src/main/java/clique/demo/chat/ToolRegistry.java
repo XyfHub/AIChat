@@ -13,6 +13,10 @@ public final class ToolRegistry {
         tools.put(tool.name(), tool);
     }
 
+    public void unregister(String name) {
+        tools.remove(name);
+    }
+
     public Optional<Tool> get(String name) {
         return Optional.ofNullable(tools.get(name));
     }
