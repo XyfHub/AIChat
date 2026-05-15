@@ -153,6 +153,15 @@ public final class ChatApp {
                 String sub = mcpParts[0].toLowerCase();
                 String subArgs = mcpParts.length > 1 ? mcpParts[1].trim() : "";
 
+                // Allow /mcp add{...} (no space) to work like /mcp add {...}
+                if ((sub.startsWith("add{") || sub.startsWith("add[")) && subArgs.isEmpty()) {
+                    subArgs = sub.substring(3);
+                    sub = "add";
+                } else if ((sub.startsWith("remove{") || sub.startsWith("remove[")) && subArgs.isEmpty()) {
+                    subArgs = sub.substring(6);
+                    sub = "remove";
+                }
+
                 switch (sub) {
                     case "list" -> showMcpStatus();
                     case "connect" -> {
