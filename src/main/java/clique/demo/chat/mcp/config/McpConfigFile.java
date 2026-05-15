@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -33,6 +34,31 @@ public final class McpConfigFile {
         } catch (IOException e) {
             System.err.println("[mcp] Failed to parse config file: " + e.getMessage());
             return new McpConfigFile(List.of());
+        }
+    }
+
+    public static void addServer(McpServerConfig server) {
+        Path path = resolvePath();
+        McpConfigFile current = load();
+        List<McpServerConfig> merged = new ArrayList<>(current.servers());
+        merged.removeIf(s -> s.name().equals(server.name()));
+        merged.add(server);
+        writeServers(path, merged);
+    }
+
+    public static void removeServer(String name) {
+        Path path = resolvePath();
+        McpConfigFile current = load();
+        List<McpServerConfig> merged = new ArrayList<>(current.servers());
+        merged.removeIf(s -> s.name().equals(name));
+        if (merged.isEmpty()) {
+            try {
+                Files.deleteIfExists(path);
+            } catch (IOException e) {
+                System.err.println("[mcp] Failed to delete config file: " + e.getMessage());
+            }
+        } else {
+            writeServers(path, merged);
         }
     }
 
@@ -80,6 +106,30 @@ public final class McpConfigFile {
             }
         }
         return new McpConfigFile(configs);
+    }
+
+    private static void writeServers(Path path, List<McpServerConfig> servers) {
+        try {
+            Files.createDirectories(path.getParent());
+            List<Map<String, Object>> serverList = new ArrayList<>();
+            for (McpServerConfig s : servers) {
+                Map<String, Object> entry = new LinkedHashMap<>();
+                entry.put("name", s.name());
+                entry.put("transport", s.transport());
+                if (s.url() != null) entry.put("url", s.url());
+                if (s.command() != null) entry.put("command", s.command());
+                if (s.args() != null) entry.put("args", s.args());
+                if (s.env() != null) entry.put("env", s.env());
+                if (s.headers() != null) entry.put("headers", s.headers());
+                if (s.workDir() != null) entry.put("workDir", s.workDir());
+                serverList.add(entry);
+            }
+            Map<String, Object> root = Map.of("servers", serverList);
+            String json = MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(root);
+            Files.writeString(path, json);
+        } catch (IOException e) {
+            System.err.println("[mcp] Failed to write config file: " + e.getMessage());
+        }
     }
 
     private static String str(Map<String, Object> map, String key) {
