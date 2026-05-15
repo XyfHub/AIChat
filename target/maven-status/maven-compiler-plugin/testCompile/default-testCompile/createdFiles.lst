@@ -1,0 +1,11 @@
+clique\demo\chat\mcp\server\McpServerTest$4.class
+clique\demo\chat\mcp\client\McpClientTest$FakeTransport.class
+clique\demo\chat\mcp\client\McpToolAdapterTest.class
+clique\demo\chat\mcp\server\McpServerTest$1.class
+clique\demo\chat\mcp\server\McpServerTest$3.class
+clique\demo\chat\mcp\protocol\McpCodecTest.class
+clique\demo\chat\mcp\server\McpServerTest.class
+clique\demo\chat\mcp\server\McpServerTest$2.class
+clique\demo\chat\mcp\transport\StdioTransportTest.class
+clique\demo\chat\mcp\client\McpClientTest.class
+clique\demo\chat\mcp\server\McpServerTest$FakeTransport.class
