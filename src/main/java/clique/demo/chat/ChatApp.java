@@ -166,7 +166,21 @@ public final class ChatApp {
                     }
                     case "add" -> {
                         if (subArgs.isEmpty()) {
-                            ChatRenderer.error("Usage: /mcp add <json-config>");
+                            ChatRenderer.error("Usage: /mcp add <json-config> — paste JSON, supports multi-line input:");
+                            ChatRenderer.info("Enter your JSON (end with a line containing only '}' or ']' to finish):");
+                            subArgs = readMultilineJson();
+                            if (subArgs.isEmpty()) {
+                                ChatRenderer.error("No input received.");
+                            } else {
+                                mcpAdd(subArgs);
+                            }
+                        } else if (!isJsonComplete(subArgs)) {
+                            subArgs = subArgs + "\n" + readMultilineJson();
+                            if (subArgs.isEmpty()) {
+                                ChatRenderer.error("No input received.");
+                            } else {
+                                mcpAdd(subArgs);
+                            }
                         } else {
                             mcpAdd(subArgs);
                         }
@@ -633,6 +647,43 @@ public final class ChatApp {
             messages.set(0, ChatMessage.system(buildSystemPrompt()));
         }
         ChatRenderer.success("Reloaded config — " + newTools + " new tools registered.");
+    }
+
+    private static boolean isJsonComplete(String text) {
+        int braces = 0;
+        int brackets = 0;
+        boolean inString = false;
+        boolean escaped = false;
+        for (int i = 0; i < text.length(); i++) {
+            char c = text.charAt(i);
+            if (escaped) { escaped = false; continue; }
+            if (c == '\\' && inString) { escaped = true; continue; }
+            if (c == '"') { inString = !inString; continue; }
+            if (inString) continue;
+            if (c == '{') braces++;
+            if (c == '}') braces--;
+            if (c == '[') brackets++;
+            if (c == ']') brackets--;
+        }
+        return braces == 0 && brackets == 0;
+    }
+
+    private static String readMultilineJson() {
+        StringBuilder sb = new StringBuilder();
+        while (true) {
+            System.out.print("... ");
+            String line = readLine();
+            if (line == null) break;
+            line = line.trim();
+            if (line.equals("}") || line.equals("]") || line.equals("};") || line.equals("];")) {
+                sb.append(line);
+                break;
+            }
+            if (!sb.isEmpty()) sb.append("\n");
+            sb.append(line);
+            if (isJsonComplete(sb.toString())) break;
+        }
+        return sb.toString();
     }
 
     private static void startBuiltinMcp(String key,
