@@ -397,7 +397,8 @@ public final class ChatApp {
                 List<Object> list = mapper.readValue(json, List.class);
                 return parseConfigEntries(list);
             } catch (Exception e2) {
-                ChatRenderer.error("Failed to parse JSON: " + e2.getMessage());
+                ChatRenderer.error("Failed to parse JSON as object: " + e1.getMessage());
+                ChatRenderer.error("Failed to parse JSON as array: " + e2.getMessage());
                 return List.of();
             }
         }
