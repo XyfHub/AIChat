@@ -5,6 +5,7 @@ import clique.demo.chat.mcp.client.McpClient;
 import clique.demo.chat.mcp.client.McpToolAdapter;
 import clique.demo.chat.mcp.config.McpConfigFile;
 import clique.demo.chat.mcp.config.McpLauncher;
+import clique.demo.chat.mcp.config.McpServerConfig;
 import clique.demo.chat.mcp.protocol.McpServerTool;
 import clique.demo.chat.mcp.transport.HttpSseTransport;
 import clique.demo.chat.mcp.transport.McpTransport;
@@ -33,6 +34,7 @@ public final class ChatApp {
     private static ToolRegistry toolRegistry;
     private static boolean toolsEnabled = true;
     private static final Map<String, McpClient> mcpClients = new LinkedHashMap<>();
+    private static final Map<String, List<String>> mcpToolNames = new LinkedHashMap<>();
     private static int toolCallCounter;
 
     public static void main(String[] args) {
@@ -53,7 +55,7 @@ public final class ChatApp {
         if (!mcpConfig.servers().isEmpty()) {
             System.out.println("[mcp] Loading " + mcpConfig.servers().size()
                     + " server(s) from config...");
-            McpLauncher.launch(mcpConfig.servers(), toolRegistry, mcpClients);
+            McpLauncher.launch(mcpConfig.servers(), toolRegistry, mcpClients, mcpToolNames);
             if (toolsEnabled) {
                 messages.add(ChatMessage.system(buildSystemPrompt()));
             }
@@ -162,11 +164,27 @@ public final class ChatApp {
                             dispatchConnect(subArgs);
                         }
                     }
+                    case "add" -> {
+                        if (subArgs.isEmpty()) {
+                            ChatRenderer.error("Usage: /mcp add <json-config>");
+                        } else {
+                            mcpAdd(subArgs);
+                        }
+                    }
+                    case "remove" -> {
+                        if (subArgs.isEmpty()) {
+                            ChatRenderer.error("Usage: /mcp remove <name>");
+                        } else {
+                            mcpRemove(subArgs);
+                        }
+                    }
                     case "reload" -> reloadMcpConfig();
                     case "github" -> startBuiltinMcp("github", new GitHubMcpServer());
                     case "tencent" -> connectTencentDocs();
                     default -> ChatRenderer.error(
-                            "Usage: /mcp list|connect|reload|github|tencent\n" +
+                            "Usage: /mcp list|connect|add|remove|reload|github|tencent\n" +
+                            "       /mcp add <json-config>\n" +
+                            "       /mcp remove <name>\n" +
                             "       /mcp connect [http-sse|streamable-http] <url>\n" +
                             "       /mcp connect stdio <command...>");
                 }
@@ -304,6 +322,137 @@ public final class ChatApp {
         ChatRenderer.info("MCP tools are registered — use /tools to list.");
     }
 
+    private static void mcpAdd(String json) {
+        List<McpServerConfig> configs = parseAddJson(json);
+        if (configs.isEmpty()) {
+            ChatRenderer.error("Failed to parse JSON config. Expected a server object, array, or {servers:[...]} format.");
+            return;
+        }
+
+        for (McpServerConfig config : configs) {
+            if (mcpClients.containsKey(config.name())) {
+                ChatRenderer.info(config.name() + " is already connected — skipped.");
+                continue;
+            }
+            try {
+                int count = McpLauncher.connectOne(config, toolRegistry, mcpClients, mcpToolNames);
+                ChatRenderer.success(
+                        "[" + config.transport() + "] " + config.name() + " — " + count + " tools registered.");
+            } catch (Exception e) {
+                ChatRenderer.error(config.name() + " failed: " + e.getMessage());
+            }
+        }
+
+        if (!configs.isEmpty() && toolsEnabled) {
+            messages.set(0, ChatMessage.system(buildSystemPrompt()));
+        }
+
+        System.out.print("Save to config file? (y/n) ");
+        String answer = readLine();
+        if (answer != null && answer.trim().equalsIgnoreCase("y")) {
+            for (McpServerConfig config : configs) {
+                McpConfigFile.addServer(config);
+            }
+            ChatRenderer.success("Saved to config file.");
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static List<McpServerConfig> parseAddJson(String json) {
+        try {
+            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            Map<String, Object> root = mapper.readValue(json, Map.class);
+            Object serversObj = root.get("servers");
+            if (serversObj instanceof List<?> rawList) {
+                return parseConfigEntries(rawList);
+            }
+            McpServerConfig single = parseSingleEntry((Map<String, Object>) root);
+            return single != null ? List.of(single) : List.of();
+        } catch (Exception e1) {
+            try {
+                com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+                List<Object> list = mapper.readValue(json, List.class);
+                return parseConfigEntries(list);
+            } catch (Exception e2) {
+                ChatRenderer.error("Failed to parse JSON: " + e1.getMessage());
+                return List.of();
+            }
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static McpServerConfig parseSingleEntry(Map<String, Object> entry) {
+        String name = str(entry, "name");
+        String transport = str(entry, "transport");
+        String url = str(entry, "url");
+        List<String> command = strList(entry, "command");
+        List<String> args = strList(entry, "args");
+        Map<String, String> env = strMap(entry, "env");
+        Map<String, String> headers = strMap(entry, "headers");
+        String workDir = str(entry, "workDir");
+
+        if (name == null || transport == null) {
+            ChatRenderer.error("Server entry missing 'name' or 'transport'");
+            return null;
+        }
+
+        try {
+            return new McpServerConfig(name, transport, url, command, args, env, headers, workDir)
+                    .resolveEnvVars();
+        } catch (IllegalArgumentException e) {
+            ChatRenderer.error("Invalid config for '" + name + "': " + e.getMessage());
+            return null;
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static List<McpServerConfig> parseConfigEntries(List<?> rawList) {
+        List<McpServerConfig> configs = new ArrayList<>();
+        for (Object item : rawList) {
+            if (!(item instanceof Map<?, ?> entryMap)) continue;
+            McpServerConfig config = parseSingleEntry((Map<String, Object>) entryMap);
+            if (config != null) {
+                configs.add(config);
+            }
+        }
+        return configs;
+    }
+
+    private static void mcpRemove(String name) {
+        McpClient client = mcpClients.get(name);
+        if (client == null) {
+            ChatRenderer.error("No MCP server connected with name: " + name);
+            return;
+        }
+
+        try {
+            client.close();
+        } catch (Exception e) {
+            ChatRenderer.error("Error closing connection: " + e.getMessage());
+        }
+
+        List<String> toolNames = mcpToolNames.remove(name);
+        if (toolNames != null) {
+            for (String toolName : toolNames) {
+                toolRegistry.unregister(toolName);
+            }
+        }
+        mcpClients.remove(name);
+
+        if (toolsEnabled) {
+            messages.set(0, ChatMessage.system(buildSystemPrompt()));
+        }
+
+        ChatRenderer.success(name + " disconnected — " + (toolNames != null ? toolNames.size() : 0) + " tools removed.");
+
+        System.out.print("Remove from config file? (y/n) ");
+        String answer = readLine();
+        if (answer != null && answer.trim().equalsIgnoreCase("y")) {
+            McpConfigFile.removeServer(name);
+            ChatRenderer.success("Removed from config file.");
+        }
+    }
+
     private static void connectTencentDocs() {
         if (mcpClients.containsKey("tencent")) {
             ChatRenderer.info("Tencent Docs is already connected.");
@@ -335,11 +484,14 @@ public final class ChatApp {
             var client = new McpClient(transport);
             client.connect();
             int count = 0;
+            List<String> toolNames = new ArrayList<>();
             for (McpServerTool tool : client.listTools()) {
                 toolRegistry.register(new McpToolAdapter(client, tool));
+                toolNames.add(tool.name());
                 count++;
             }
             mcpClients.put("tencent", client);
+            mcpToolNames.put("tencent", toolNames);
             if (toolsEnabled) {
                 messages.set(0, ChatMessage.system(buildSystemPrompt()));
             }
@@ -395,11 +547,14 @@ public final class ChatApp {
             var client = new McpClient(transport);
             client.connect();
             int count = 0;
+            List<String> toolNames = new ArrayList<>();
             for (McpServerTool tool : client.listTools()) {
                 toolRegistry.register(new McpToolAdapter(client, tool));
+                toolNames.add(tool.name());
                 count++;
             }
             mcpClients.put(key, client);
+            mcpToolNames.put(key, toolNames);
             if (toolsEnabled) {
                 messages.set(0, ChatMessage.system(buildSystemPrompt()));
             }
@@ -426,11 +581,14 @@ public final class ChatApp {
             var client = new McpClient(transport);
             client.connect();
             int count = 0;
+            List<String> toolNames = new ArrayList<>();
             for (McpServerTool tool : client.listTools()) {
                 toolRegistry.register(new McpToolAdapter(client, tool));
+                toolNames.add(tool.name());
                 count++;
             }
             mcpClients.put(key, client);
+            mcpToolNames.put(key, toolNames);
             if (toolsEnabled) {
                 messages.set(0, ChatMessage.system(buildSystemPrompt()));
             }
@@ -464,13 +622,41 @@ public final class ChatApp {
         return parts;
     }
 
+    private static String str(Map<String, Object> map, String key) {
+        Object v = map.get(key);
+        return v instanceof String s ? s : null;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static List<String> strList(Map<String, Object> map, String key) {
+        Object v = map.get(key);
+        if (v instanceof List<?> list) {
+            return list.stream().map(Object::toString).toList();
+        }
+        return null;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Map<String, String> strMap(Map<String, Object> map, String key) {
+        Object v = map.get(key);
+        if (v instanceof Map<?, ?> m) {
+            Map<String, String> result = new LinkedHashMap<>();
+            for (var entry : m.entrySet()) {
+                result.put(entry.getKey().toString(),
+                        entry.getValue() != null ? entry.getValue().toString() : null);
+            }
+            return result;
+        }
+        return null;
+    }
+
     private static void reloadMcpConfig() {
         McpConfigFile config = McpConfigFile.load();
         if (config.servers().isEmpty()) {
             ChatRenderer.info("No MCP servers found in config file.");
             return;
         }
-        int newTools = McpLauncher.launch(config.servers(), toolRegistry, mcpClients);
+        int newTools = McpLauncher.launch(config.servers(), toolRegistry, mcpClients, mcpToolNames);
         if (newTools > 0 && toolsEnabled) {
             messages.set(0, ChatMessage.system(buildSystemPrompt()));
         }

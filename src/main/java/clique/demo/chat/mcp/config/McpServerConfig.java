@@ -34,7 +34,7 @@ public record McpServerConfig(
         }
     }
 
-    McpServerConfig resolveEnvVars() {
+    public McpServerConfig resolveEnvVars() {
         return new McpServerConfig(
                 name,
                 transport,
