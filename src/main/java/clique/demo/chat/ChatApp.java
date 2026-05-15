@@ -374,7 +374,7 @@ public final class ChatApp {
                 List<Object> list = mapper.readValue(json, List.class);
                 return parseConfigEntries(list);
             } catch (Exception e2) {
-                ChatRenderer.error("Failed to parse JSON: " + e1.getMessage());
+                ChatRenderer.error("Failed to parse JSON: " + e2.getMessage());
                 return List.of();
             }
         }
@@ -382,14 +382,14 @@ public final class ChatApp {
 
     @SuppressWarnings("unchecked")
     private static McpServerConfig parseSingleEntry(Map<String, Object> entry) {
-        String name = str(entry, "name");
-        String transport = str(entry, "transport");
-        String url = str(entry, "url");
-        List<String> command = strList(entry, "command");
-        List<String> args = strList(entry, "args");
-        Map<String, String> env = strMap(entry, "env");
-        Map<String, String> headers = strMap(entry, "headers");
-        String workDir = str(entry, "workDir");
+        String name = McpConfigFile.str(entry, "name");
+        String transport = McpConfigFile.str(entry, "transport");
+        String url = McpConfigFile.str(entry, "url");
+        List<String> command = McpConfigFile.strList(entry, "command");
+        List<String> args = McpConfigFile.strList(entry, "args");
+        Map<String, String> env = McpConfigFile.strMap(entry, "env");
+        Map<String, String> headers = McpConfigFile.strMap(entry, "headers");
+        String workDir = McpConfigFile.str(entry, "workDir");
 
         if (name == null || transport == null) {
             ChatRenderer.error("Server entry missing 'name' or 'transport'");
@@ -620,34 +620,6 @@ public final class ChatApp {
             parts.add(current.toString());
         }
         return parts;
-    }
-
-    private static String str(Map<String, Object> map, String key) {
-        Object v = map.get(key);
-        return v instanceof String s ? s : null;
-    }
-
-    @SuppressWarnings("unchecked")
-    private static List<String> strList(Map<String, Object> map, String key) {
-        Object v = map.get(key);
-        if (v instanceof List<?> list) {
-            return list.stream().map(Object::toString).toList();
-        }
-        return null;
-    }
-
-    @SuppressWarnings("unchecked")
-    private static Map<String, String> strMap(Map<String, Object> map, String key) {
-        Object v = map.get(key);
-        if (v instanceof Map<?, ?> m) {
-            Map<String, String> result = new LinkedHashMap<>();
-            for (var entry : m.entrySet()) {
-                result.put(entry.getKey().toString(),
-                        entry.getValue() != null ? entry.getValue().toString() : null);
-            }
-            return result;
-        }
-        return null;
     }
 
     private static void reloadMcpConfig() {

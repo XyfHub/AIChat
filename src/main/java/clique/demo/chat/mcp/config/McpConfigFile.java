@@ -132,13 +132,13 @@ public final class McpConfigFile {
         }
     }
 
-    private static String str(Map<String, Object> map, String key) {
+    public static String str(Map<String, Object> map, String key) {
         Object v = map.get(key);
         return v instanceof String s ? s : null;
     }
 
     @SuppressWarnings("unchecked")
-    private static List<String> strList(Map<String, Object> map, String key) {
+    public static List<String> strList(Map<String, Object> map, String key) {
         Object v = map.get(key);
         if (v instanceof List<?> list) {
             return list.stream().map(Object::toString).toList();
@@ -147,7 +147,7 @@ public final class McpConfigFile {
     }
 
     @SuppressWarnings("unchecked")
-    private static Map<String, String> strMap(Map<String, Object> map, String key) {
+    public static Map<String, String> strMap(Map<String, Object> map, String key) {
         Object v = map.get(key);
         if (v instanceof Map<?, ?> m) {
             Map<String, String> result = new java.util.LinkedHashMap<>();
