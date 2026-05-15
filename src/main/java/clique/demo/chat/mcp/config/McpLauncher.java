@@ -19,22 +19,15 @@ public final class McpLauncher {
 
     public static int launch(List<McpServerConfig> configs,
                               ToolRegistry registry,
-                              Map<String, McpClient> clients) {
+                              Map<String, McpClient> clients,
+                              Map<String, List<String>> toolNames) {
         int totalTools = 0;
         for (McpServerConfig config : configs) {
             if (clients.containsKey(config.name())) {
                 continue;
             }
             try {
-                McpTransport transport = createTransport(config);
-                McpClient client = new McpClient(transport);
-                client.connect();
-                int count = 0;
-                for (var tool : client.listTools()) {
-                    registry.register(new McpToolAdapter(client, tool));
-                    count++;
-                }
-                clients.put(config.name(), client);
+                int count = connectOne(config, registry, clients, toolNames);
                 System.out.println("[mcp] " + config.name() + " connected — " + count + " tools");
                 totalTools += count;
             } catch (Exception e) {
@@ -44,7 +37,29 @@ public final class McpLauncher {
         return totalTools;
     }
 
-    private static McpTransport createTransport(McpServerConfig config) {
+    public static int connectOne(McpServerConfig config,
+                                  ToolRegistry registry,
+                                  Map<String, McpClient> clients,
+                                  Map<String, List<String>> toolNames) throws Exception {
+        if (clients.containsKey(config.name())) {
+            return 0;
+        }
+        McpTransport transport = createTransport(config);
+        McpClient client = new McpClient(transport);
+        client.connect();
+        int count = 0;
+        List<String> names = new ArrayList<>();
+        for (var tool : client.listTools()) {
+            registry.register(new McpToolAdapter(client, tool));
+            names.add(tool.name());
+            count++;
+        }
+        clients.put(config.name(), client);
+        toolNames.put(config.name(), names);
+        return count;
+    }
+
+    public static McpTransport createTransport(McpServerConfig config) {
         return switch (config.transport()) {
             case "stdio" -> {
                 List<String> fullCmd = new ArrayList<>(config.command());
