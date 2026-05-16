@@ -14,12 +14,19 @@ import clique.demo.chat.mcp.transport.StreamableHttpTransport;
 import clique.demo.chat.mcp.examples.github.GitHubMcpServer;
 import clique.demo.chat.mcp.examples.tencentdocs.TencentDocsMcpServer;
 import clique.demo.chat.tools.EditFileTool;
+import clique.demo.chat.tools.GitDiffTool;
+import clique.demo.chat.tools.GitLogTool;
+import clique.demo.chat.tools.GitStatusTool;
+import clique.demo.chat.tools.GlobTool;
+import clique.demo.chat.tools.GrepTool;
+import clique.demo.chat.tools.LsTool;
 import clique.demo.chat.tools.ReadFileTool;
 import clique.demo.chat.tools.ShellTool;
 import clique.demo.chat.tools.WriteFileTool;
 import io.github.kusoroadeolu.clique.Clique;
 
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -50,6 +57,12 @@ public final class ChatApp {
         toolRegistry.register(new ReadFileTool());
         toolRegistry.register(new WriteFileTool());
         toolRegistry.register(new EditFileTool());
+        toolRegistry.register(new GrepTool());
+        toolRegistry.register(new GlobTool());
+        toolRegistry.register(new LsTool());
+        toolRegistry.register(new GitDiffTool());
+        toolRegistry.register(new GitLogTool());
+        toolRegistry.register(new GitStatusTool());
 
         McpConfigFile mcpConfig = McpConfigFile.load();
         if (!mcpConfig.servers().isEmpty()) {
@@ -313,6 +326,8 @@ public final class ChatApp {
 
     private static String buildSystemPrompt() {
         String sp = config.systemPrompt();
+        ProjectContext ctx = new ProjectContext(Paths.get("").toAbsolutePath());
+        sp += ctx.build();
         if (toolsEnabled) {
             sp += toolRegistry.buildSystemPromptSection();
         }
@@ -680,8 +695,12 @@ public final class ChatApp {
 
     private static String readMultilineJson(String prefix) {
         StringBuilder sb = new StringBuilder();
+        boolean first = true;
         while (true) {
-            System.out.print("... ");
+            if (first) {
+                System.out.print("... ");
+                first = false;
+            }
             String line = readLine();
             if (line == null) break;
             if (!sb.isEmpty()) sb.append("\n");
