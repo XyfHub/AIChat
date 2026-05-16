@@ -102,19 +102,23 @@ public final class GrepTool implements Tool {
                     continue;
                 }
                 String fileName = cwd.relativize(file).toString();
-                var lines = Files.readAllLines(file);
-                for (int i = 0; i < lines.size(); i++) {
-                    if (pattern.matcher(lines.get(i)).find()) {
-                        if (matchCount >= maxResults) {
-                            result.append("\n... (reached max results limit of ").append(maxResults).append(")");
-                            break OUTER;
+                try {
+                    var lines = Files.readAllLines(file);
+                    for (int i = 0; i < lines.size(); i++) {
+                        if (pattern.matcher(lines.get(i)).find()) {
+                            if (matchCount >= maxResults) {
+                                result.append("\n... (reached max results limit of ").append(maxResults).append(")");
+                                break OUTER;
+                            }
+                            result.append(fileName).append(":").append(i + 1).append(": ");
+                            String line = lines.get(i);
+                            result.append(line.length() > 200 ? line.substring(0, 200) + "..." : line);
+                            result.append("\n");
+                            matchCount++;
                         }
-                        result.append(fileName).append(":").append(i + 1).append(": ");
-                        String line = lines.get(i);
-                        result.append(line.length() > 200 ? line.substring(0, 200) + "..." : line);
-                        result.append("\n");
-                        matchCount++;
                     }
+                } catch (java.io.IOException e) {
+                    // skip unreadable file
                 }
             }
         }
