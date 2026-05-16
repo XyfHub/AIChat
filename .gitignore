@@ -1,0 +1,15 @@
+# Maven build output
+target/
+dependency-reduced-pom.xml
+
+# Claude Code local settings
+.claude/settings.local.json
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
