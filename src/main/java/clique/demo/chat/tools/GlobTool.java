@@ -57,7 +57,12 @@ public final class GlobTool implements Tool {
             searchPath = cwd;
         }
 
-        PathMatcher matcher = searchPath.getFileSystem().getPathMatcher("glob:" + patternStr);
+        PathMatcher matcher;
+        try {
+            matcher = searchPath.getFileSystem().getPathMatcher("glob:" + patternStr);
+        } catch (java.util.regex.PatternSyntaxException e) {
+            return "Error: invalid glob pattern — " + e.getMessage();
+        }
         StringBuilder result = new StringBuilder();
         int count = 0;
 
