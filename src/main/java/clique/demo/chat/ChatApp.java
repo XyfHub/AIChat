@@ -46,6 +46,7 @@ public final class ChatApp {
     private static int toolCallCounter;
     private static boolean autoApprove;
     private static final Set<String> sessionApprovedTools = new java.util.HashSet<>();
+    private static String lastFoldedOutput;
 
     public static void main(String[] args) {
         config = ChatConfig.load();
@@ -176,6 +177,14 @@ public final class ChatApp {
                     ChatRenderer.success("Auto-approve LOW danger tools: OFF");
                 } else {
                     ChatRenderer.error("Usage: /auto on|off");
+                }
+            }
+            case "/expand" -> {
+                if (lastFoldedOutput == null) {
+                    ChatRenderer.info("No folded output to expand.");
+                } else {
+                    System.out.println(lastFoldedOutput);
+                    lastFoldedOutput = null;
                 }
             }
             case "/mcp" -> {
@@ -328,14 +337,28 @@ public final class ChatApp {
 
                 String result;
                 boolean success = true;
+                long startTime = System.currentTimeMillis();
                 try {
                     result = tool.execute(tc.arguments());
                 } catch (Exception e) {
                     result = "Error: " + e.getMessage();
                     success = false;
                 }
+                long elapsed = System.currentTimeMillis() - startTime;
+                if (success) {
+                    result += "\n[done, " + elapsed + "ms]";
+                }
 
-                ChatRenderer.toolResult(tc, result, success);
+                String displayResult = result;
+                if (result != null) {
+                    List<String> lines = result.lines().toList();
+                    if (lines.size() > 20) {
+                        displayResult = String.join("\n", lines.subList(0, Math.min(10, lines.size())))
+                                + "\n... (" + (lines.size() - 10) + " more lines, type /expand to view all)";
+                        lastFoldedOutput = result;
+                    }
+                }
+                ChatRenderer.toolResult(tc, displayResult, success);
                 messages.add(ChatMessage.tool(tc.id(), result));
 
                 if (!success) {
