@@ -64,7 +64,7 @@ public final class LsTool implements Tool {
             } catch (NumberFormatException ignored) {
             }
         }
-        final int depth = Math.min(parsedDepth, MAX_DEPTH);
+        final int depth = Math.max(1, Math.min(parsedDepth, MAX_DEPTH));
 
         StringBuilder result = new StringBuilder();
         String rootName = cwd.relativize(searchPath).toString();
@@ -73,7 +73,7 @@ public final class LsTool implements Tool {
 
         try (var stream = Files.walk(searchPath, depth)) {
             stream
-                    .filter(p -> !p.equals(searchPath))
+                    .filter(p -> !p.equals(searchPath) && (Files.isRegularFile(p) || Files.isDirectory(p)))
                     .sorted((a, b) -> {
                         boolean aDir = Files.isDirectory(a);
                         boolean bDir = Files.isDirectory(b);
