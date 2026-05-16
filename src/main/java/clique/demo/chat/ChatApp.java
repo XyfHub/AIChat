@@ -177,14 +177,14 @@ public final class ChatApp {
                         if (subArgs.isEmpty()) {
                             ChatRenderer.error("Usage: /mcp add <json-config> — paste JSON, supports multi-line input:");
                             ChatRenderer.info("Enter your JSON (end with a line containing only '}' or ']' to finish):");
-                            subArgs = readMultilineJson();
+                            subArgs = readMultilineJson(subArgs);
                             if (subArgs.isEmpty()) {
                                 ChatRenderer.error("No input received.");
                             } else {
                                 mcpAdd(subArgs);
                             }
                         } else if (!isJsonComplete(subArgs)) {
-                            subArgs = subArgs + "\n" + readMultilineJson();
+                            subArgs = subArgs + "\n" + readMultilineJson(subArgs);
                             if (subArgs.isEmpty()) {
                                 ChatRenderer.error("No input received.");
                             } else {
@@ -678,20 +678,15 @@ public final class ChatApp {
         return braces == 0 && brackets == 0;
     }
 
-    private static String readMultilineJson() {
+    private static String readMultilineJson(String prefix) {
         StringBuilder sb = new StringBuilder();
         while (true) {
             System.out.print("... ");
             String line = readLine();
             if (line == null) break;
-            line = line.trim();
-            if (line.equals("}") || line.equals("]") || line.equals("};") || line.equals("];")) {
-                sb.append(line);
-                break;
-            }
             if (!sb.isEmpty()) sb.append("\n");
-            sb.append(line);
-            if (isJsonComplete(sb.toString())) break;
+            sb.append(line.trim());
+            if (isJsonComplete(prefix + "\n" + sb)) break;
         }
         return sb.toString();
     }

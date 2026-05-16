@@ -3,8 +3,10 @@ package clique.demo.chat.mcp.client;
 import clique.demo.chat.DangerLevel;
 import clique.demo.chat.Tool;
 import clique.demo.chat.mcp.protocol.*;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 public final class McpToolAdapter implements Tool {
@@ -79,6 +81,8 @@ public final class McpToolAdapter implements Tool {
         return result;
     }
 
+    private static final ObjectMapper JSON = new ObjectMapper();
+
     private static Object coerceValue(String value, String type) {
         if (type == null) return value;
         return switch (type) {
@@ -88,6 +92,16 @@ public final class McpToolAdapter implements Tool {
                     if (value.contains(".")) yield Double.parseDouble(value);
                     yield Long.parseLong(value);
                 } catch (NumberFormatException e) { yield value; }
+            }
+            case "array" -> {
+                try {
+                    yield JSON.readValue(value, List.class);
+                } catch (Exception e) { yield value; }
+            }
+            case "object" -> {
+                try {
+                    yield JSON.readValue(value, Map.class);
+                } catch (Exception e) { yield value; }
             }
             default -> value;
         };
