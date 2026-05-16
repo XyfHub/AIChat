@@ -174,8 +174,8 @@ public final class ChatRenderer {
         Clique.frame(BoxType.ROUNDED, "green")
                 .title(Clique.ink().green().bold().on("Risk Levels"))
                 .nest(Clique.ink().green().bold().on("[低危] ")
-                        + Clique.ink().brightWhite().on("Read / Create")
-                        + Clique.ink().brightBlack().on("  — ls, dir, cat, read_file, creating new files"),
+                        + Clique.ink().brightWhite().on("Read / List / Search / Git read")
+                        + Clique.ink().brightBlack().on("  — ls, grep, glob, read_file, git_diff, git_log, git_status"),
                         FrameAlign.LEFT)
                 .nest(Clique.ink().yellow().bold().on("[中危] ")
                         + Clique.ink().brightWhite().on("Modify / Overwrite")
@@ -209,6 +209,10 @@ public final class ChatRenderer {
                         Clique.ink().brightBlack().on("          Show current configuration"), FrameAlign.LEFT)
                 .nest(Clique.ink().brightWhite().bold().on("/tools [on|off]") +
                         Clique.ink().brightBlack().on("  Manage tool calling"), FrameAlign.LEFT)
+                .nest(Clique.ink().brightWhite().bold().on("/auto on|off") +
+                        Clique.ink().brightBlack().on("    Auto-approve LOW danger tools"), FrameAlign.LEFT)
+                .nest(Clique.ink().brightWhite().bold().on("/expand") +
+                        Clique.ink().brightBlack().on("          Show full output of last folded result"), FrameAlign.LEFT)
                 .nest(Clique.ink().brightWhite().bold().on("/mcp list|connect|reload|github|tencent") +
                         Clique.ink().brightBlack().on("  MCP management"), FrameAlign.LEFT)
                 .nest(Clique.ink().brightWhite().bold().on("/mcp connect [http-sse|streamable-http|stdio]") +
