@@ -2,8 +2,9 @@
 target/
 dependency-reduced-pom.xml
 
-# Claude Code local settings
+# Claude Code
 .claude/settings.local.json
+CLAUDE.md
 
 # IDE
 .idea/
