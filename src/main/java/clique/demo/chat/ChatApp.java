@@ -32,6 +32,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.Set;
 
 public final class ChatApp {
 
@@ -43,6 +44,8 @@ public final class ChatApp {
     private static final Map<String, McpClient> mcpClients = new LinkedHashMap<>();
     private static final Map<String, List<String>> mcpToolNames = new LinkedHashMap<>();
     private static int toolCallCounter;
+    private static boolean autoApprove;
+    private static final Set<String> sessionApprovedTools = new java.util.HashSet<>();
 
     public static void main(String[] args) {
         config = ChatConfig.load();
@@ -161,6 +164,20 @@ public final class ChatApp {
                 }
             }
             case "/danger" -> ChatRenderer.showDanger();
+            case "/auto" -> {
+                if (args.isEmpty()) {
+                    ChatRenderer.info("/auto " + (autoApprove ? "on" : "off") + " — LOW danger tools are "
+                            + (autoApprove ? "auto-approved" : "manually confirmed"));
+                } else if ("on".equalsIgnoreCase(args)) {
+                    autoApprove = true;
+                    ChatRenderer.success("Auto-approve LOW danger tools: ON");
+                } else if ("off".equalsIgnoreCase(args)) {
+                    autoApprove = false;
+                    ChatRenderer.success("Auto-approve LOW danger tools: OFF");
+                } else {
+                    ChatRenderer.error("Usage: /auto on|off");
+                }
+            }
             case "/mcp" -> {
                 String[] mcpParts = args.split("\\s+", 2);
                 String sub = mcpParts[0].toLowerCase();
@@ -288,11 +305,20 @@ public final class ChatApp {
                 ChatRenderer.toolCallBanner(tc, iteration * toolCalls.size() + toolCalls.indexOf(tc) + 1, level);
 
                 boolean approved;
-                if (level == DangerLevel.LOW) {
+                if (level == DangerLevel.LOW && autoApprove) {
+                    ChatRenderer.info("Auto-approved (low risk, /auto on).");
+                    approved = true;
+                } else if (level == DangerLevel.LOW) {
                     ChatRenderer.info("Auto-approved (low risk).");
+                    approved = true;
+                } else if (level == DangerLevel.MEDIUM && sessionApprovedTools.contains(tc.name())) {
+                    ChatRenderer.info("Auto-approved (previously approved this session).");
                     approved = true;
                 } else {
                     approved = ChatRenderer.toolApprovalPrompt(tc, level);
+                    if (approved && level == DangerLevel.MEDIUM) {
+                        sessionApprovedTools.add(tc.name());
+                    }
                 }
                 if (!approved) {
                     ChatRenderer.info("Execution declined by user.");
