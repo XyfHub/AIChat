@@ -47,6 +47,7 @@ public final class ToolRegistry {
             sb.append("\n");
             i++;
         }
+        sb.append("TOOL SELECTION: Prefer dedicated tools over shell_command. Use ls to list directories, read_file to read files, grep to search content, glob to find files by pattern. Only use shell_command for operations that have no dedicated tool.\n\n");
         sb.append("TO USE A TOOL: Output ONLY a <tool_call> XML block with NO other text. Include ONLY the parameters you have values for — omit optional params when unsure.\n\n");
         sb.append("<tool_call>\n");
         sb.append("<function=function_name>\n");

@@ -366,8 +366,7 @@ public final class ChatApp {
                     return;
                 }
             }
-            ChatRenderer.turnSeparator();
-            return;
+            // Continue loop — AI should analyze tool results and respond
         }
 
         ChatRenderer.turnSeparator();

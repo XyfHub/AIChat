@@ -33,8 +33,9 @@ public final class ShellTool implements Tool {
     @Override
     public String description() {
         return "Execute a shell command and return its output. "
-                + "Use for: listing files, reading files, creating directories, "
-                + "finding files, checking disk space, and other shell operations.";
+                + "ONLY use this for commands that have NO dedicated tool. "
+                + "For listing files use ls, for reading files use read_file, "
+                + "for searching content use grep, for finding files by pattern use glob.";
     }
 
     @Override
