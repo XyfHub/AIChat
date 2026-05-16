@@ -1,7 +1,7 @@
 package clique.demo.chat;
 
 import java.io.ByteArrayOutputStream;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.TimeUnit;
@@ -174,7 +174,7 @@ public final class ProjectContext {
             ByteArrayOutputStream branchOut = new ByteArrayOutputStream();
             branchProc.getInputStream().transferTo(branchOut);
             branchProc.waitFor(GIT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
-            String branch = branchOut.toString(Charset.defaultCharset()).strip();
+            String branch = branchOut.toString(StandardCharsets.UTF_8).strip();
             if (!branch.isEmpty()) {
                 sb.append("branch: ").append(branch).append("\n");
             }
@@ -184,7 +184,7 @@ public final class ProjectContext {
             ByteArrayOutputStream logOut = new ByteArrayOutputStream();
             logProc.getInputStream().transferTo(logOut);
             logProc.waitFor(GIT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
-            String log = logOut.toString(Charset.defaultCharset()).strip();
+            String log = logOut.toString(StandardCharsets.UTF_8).strip();
             if (!log.isEmpty()) {
                 sb.append("recent:\n");
                 for (String line : log.split("\n")) {
