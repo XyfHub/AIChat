@@ -67,7 +67,7 @@ public final class McpConfigFile {
         if (configPath != null && !configPath.isBlank()) {
             return Path.of(configPath);
         }
-        return Path.of(System.getProperty("user.home"), ".aiChat", "mcp-servers.json");
+        return Path.of(System.getProperty("user.home"), ".aiCoding", "mcp-servers.json");
     }
 
     @SuppressWarnings("unchecked")

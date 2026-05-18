@@ -5,12 +5,12 @@
          http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.aichat</groupId>
-    <artifactId>ai-chat</artifactId>
+    <groupId>com.aicoding</groupId>
+    <artifactId>ai-coding</artifactId>
     <version>1.0.0</version>
 
-    <name>AIChat — Terminal AI Chat</name>
-    <description>An AI chat application demonstrating the Clique terminal UI library with MCP integration</description>
+    <name>AICoding — Terminal AI Coding Assistant</name>
+    <description>An AI coding assistant demonstrating the Clique terminal UI library with MCP integration</description>
 
     <properties>
         <maven.compiler.release>21</maven.compiler.release>

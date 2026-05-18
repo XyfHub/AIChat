@@ -642,7 +642,7 @@ Expected: All tests pass, BUILD SUCCESS
 
 Build and run:
 ```bash
-mvn package -DskipTests && java -jar target/ai-chat-1.0.0.jar
+mvn package -DskipTests && java -jar target/ai-coding-1.0.0.jar
 ```
 
 Verify each scenario:

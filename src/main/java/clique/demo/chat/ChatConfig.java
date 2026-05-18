@@ -45,7 +45,7 @@ public final class ChatConfig {
         return new Builder()
                 .apiKey(apiKey)
                 .model(model)
-                .systemPrompt("You are a helpful AI assistant. " + osHint)
+                .systemPrompt("You are an AI coding assistant. " + osHint)
                 .build();
     }
 
@@ -97,7 +97,7 @@ public final class ChatConfig {
         private String apiKey;
         private String model = "mimo-v2-flash";
         private String apiBaseUrl = "https://api.xiaomimimo.com/v1";
-        private String systemPrompt = "You are a helpful AI assistant.";
+        private String systemPrompt = "You are an AI coding assistant.";
         private int maxTokens = 4096;
         private double temperature = 0.7;
         private boolean streaming = true;

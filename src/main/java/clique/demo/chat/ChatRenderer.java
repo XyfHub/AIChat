@@ -18,7 +18,7 @@ public final class ChatRenderer {
                 Clique.ink().brightBlack().on(" to quit");
 
         Clique.frame(BoxType.ROUNDED, "blue")
-                .title(Clique.ink().cyan().bold().on("Clique Chat · MiMo AI"))
+                .title(Clique.ink().cyan().bold().on("Clique Coding · MiMo AI"))
                 .nest(modelInfo, FrameAlign.LEFT)
                 .nest(helpHint, FrameAlign.LEFT)
                 .render();
@@ -194,7 +194,7 @@ public final class ChatRenderer {
         Clique.frame(BoxType.ROUNDED, "yellow")
                 .title(Clique.ink().yellow().bold().on("Commands"))
                 .nest(Clique.ink().brightWhite().bold().on("/exit, /quit") +
-                        Clique.ink().brightBlack().on("    Exit the chat"), FrameAlign.LEFT)
+                        Clique.ink().brightBlack().on("    Exit the assistant"), FrameAlign.LEFT)
                 .nest(Clique.ink().brightWhite().bold().on("/clear") +
                         Clique.ink().brightBlack().on("          Clear conversation history"), FrameAlign.LEFT)
                 .nest(Clique.ink().brightWhite().bold().on("/model <name>") +

@@ -1430,11 +1430,11 @@ Expected: All tests PASS
 - [ ] **Step 2: Build the JAR**
 
 Run: `mvn package -q`
-Expected: BUILD SUCCESS, `target/ai-chat-1.0.0.jar` created
+Expected: BUILD SUCCESS, `target/ai-coding-1.0.0.jar` created
 
 - [ ] **Step 3: Manual smoke test checklist**
 
-Launch: `java -jar target/ai-chat-1.0.0.jar`
+Launch: `java -jar target/ai-coding-1.0.0.jar`
 
 Verify:
 - [ ] `/tools` shows all 10 tools (4 original + 6 new)

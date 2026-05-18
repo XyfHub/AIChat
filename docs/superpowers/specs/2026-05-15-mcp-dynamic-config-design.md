@@ -14,7 +14,7 @@ Allow users to add and remove MCP server connections at runtime without restarti
 /mcp remove <name>    — disconnect a named server, unregister its tools
 ```
 
-Both commands prompt the user whether to persist the change to `~/.aiChat/mcp-servers.json`.
+Both commands prompt the user whether to persist the change to `~/.aiCoding/mcp-servers.json`.
 
 ## `/mcp add` — Detailed Flow
 
